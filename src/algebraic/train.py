@@ -60,7 +60,7 @@ def get_args(argv=None):
     p.add_argument("--lr", type=float, default=3e-3)
     p.add_argument("--min-lr-ratio", type=float, default=0.1)
     p.add_argument("--warmup", type=float, default=0.02, help="fraction (<1) or steps (>=1)")
-    p.add_argument("--schedule", default="cosine", choices=("cosine", "ards", "wsd", "linear"))
+    p.add_argument("--schedule", default=None, choices=("cosine", "ards", "wsd", "linear"))
     p.add_argument("--decay-frac", type=float, default=0.2, help="WSD decay fraction")
     p.add_argument("--wd", type=float, default=0.1)
     p.add_argument("--b1", type=float, default=0.9)
@@ -80,7 +80,10 @@ def get_args(argv=None):
     p.add_argument("--ckpt-every", type=int, default=0, help="save a checkpoint every N steps")
     p.add_argument("--keep-ckpts", type=int, default=2)
     p.add_argument("--resume", action="store_true", help="resume from the latest checkpoint in --out")
-    return p.parse_args(argv)
+    args = p.parse_args(argv)
+    if args.schedule is None:
+        args.schedule = "ards" if ("ards" in args.preset or "rational" in args.preset) else "cosine"
+    return args
 
 
 class WindowSampler:

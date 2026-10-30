@@ -36,13 +36,20 @@ PRESETS = {"standard": standard, "algebraic": algebraic}
 
 
 def build(preset: str, size: str = "125m", **overrides) -> LMConfig:
-    """Build an LMConfig for a standard, algebraic, or hybrid preset.
+    """Build an LMConfig for a standard, algebraic, ards, or hybrid preset.
 
     Keeps PRESETS strictly limited to {"standard", "algebraic"} for backward
-    compatibility, and delegates hybrid presets to hybrid.registry.HYBRID_PRESETS.
+    compatibility, and delegates ARDS presets to ards.configs.ARDS_PRESETS
+    and hybrid presets to hybrid.registry.HYBRID_PRESETS.
     """
     if preset in PRESETS:
         return PRESETS[preset](size, **overrides)
+    try:
+        from ards.configs import ARDS_PRESETS
+        if preset in ARDS_PRESETS:
+            return ARDS_PRESETS[preset](size, **overrides)
+    except ImportError:
+        pass
     try:
         from hybrid.registry import HYBRID_PRESETS
         if preset in HYBRID_PRESETS:
