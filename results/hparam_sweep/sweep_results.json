@@ -1,0 +1,128 @@
+{
+  "completed_at_ist": "2026-10-30 15:15:03 IST",
+  "token_budget_per_run": 600000000,
+  "selected_learning_rates": {
+    "standard_cosine": 0.0015,
+    "algebraic_cosine": 0.0015,
+    "standard_ards": 0.0015,
+    "algebraic_ards": 0.0015
+  },
+  "runs": {
+    "standard_cosine": [
+      {
+        "name": "standard_cosine_lr1.5e-3_s42",
+        "lr": 0.0015,
+        "cand_name": "lr1.5e-3",
+        "final_eval_nll": 3.683477276661357,
+        "final_eval_ppl": 39.78449552270893,
+        "final_train_loss": 3.667203426361084,
+        "train_seconds": 810.3964767456055
+      },
+      {
+        "name": "standard_cosine_lr3e-3_s42",
+        "lr": 0.003,
+        "cand_name": "lr3e-3",
+        "final_eval_nll": 4.110416963452199,
+        "final_eval_ppl": 60.972135422169735,
+        "final_train_loss": 4.098535537719727,
+        "train_seconds": 810.04088139534
+      },
+      {
+        "name": "standard_cosine_lr6e-3_s42",
+        "lr": 0.006,
+        "cand_name": "lr6e-3",
+        "final_eval_nll": 4.96454209968692,
+        "final_eval_ppl": 143.2429442649589,
+        "final_train_loss": 4.96101188659668,
+        "train_seconds": 810.1634147167206
+      }
+    ],
+    "algebraic_cosine": [
+      {
+        "name": "algebraic_cosine_lr1.5e-3_s42",
+        "lr": 0.0015,
+        "cand_name": "lr1.5e-3",
+        "final_eval_nll": 3.6187227671263646,
+        "final_eval_ppl": 37.289909494879666,
+        "final_train_loss": 3.597843885421753,
+        "train_seconds": 1164.1818895339966
+      },
+      {
+        "name": "algebraic_cosine_lr3e-3_s42",
+        "lr": 0.003,
+        "cand_name": "lr3e-3",
+        "final_eval_nll": 3.8294705445649195,
+        "final_eval_ppl": 46.03815662804928,
+        "final_train_loss": 3.8118300437927246,
+        "train_seconds": 1164.873530626297
+      },
+      {
+        "name": "algebraic_cosine_lr6e-3_s42",
+        "lr": 0.006,
+        "cand_name": "lr6e-3",
+        "final_eval_nll": 4.973750278597972,
+        "final_eval_ppl": 144.56804243101917,
+        "final_train_loss": 4.973143577575684,
+        "train_seconds": 1163.525595664978
+      }
+    ],
+    "standard_ards": [
+      {
+        "name": "standard_ards_lr1.5e-3_s42",
+        "lr": 0.0015,
+        "cand_name": "lr1.5e-3",
+        "final_eval_nll": 3.5132496708729226,
+        "final_eval_ppl": 33.557140449866566,
+        "final_train_loss": 3.490137815475464,
+        "train_seconds": 809.628484249115
+      },
+      {
+        "name": "standard_ards_lr3e-3_s42",
+        "lr": 0.003,
+        "cand_name": "lr3e-3",
+        "final_eval_nll": 3.6623961221976358,
+        "final_eval_ppl": 38.95457104606083,
+        "final_train_loss": 3.6449947357177734,
+        "train_seconds": 810.466539144516
+      },
+      {
+        "name": "standard_ards_lr6e-3_s42",
+        "lr": 0.006,
+        "cand_name": "lr6e-3",
+        "final_eval_nll": 5.18944854423648,
+        "final_eval_ppl": 179.36961124743604,
+        "final_train_loss": 5.193110466003418,
+        "train_seconds": 810.9716942310333
+      }
+    ],
+    "algebraic_ards": [
+      {
+        "name": "algebraic_ards_lr1.5e-3_s42",
+        "lr": 0.0015,
+        "cand_name": "lr1.5e-3",
+        "final_eval_nll": 3.434828691795224,
+        "final_eval_ppl": 31.026097085255504,
+        "final_train_loss": 3.410067558288574,
+        "train_seconds": 1164.136087179184
+      },
+      {
+        "name": "algebraic_ards_lr3e-3_s42",
+        "lr": 0.003,
+        "cand_name": "lr3e-3",
+        "final_eval_nll": 3.563355977417993,
+        "final_eval_ppl": 35.281402276604766,
+        "final_train_loss": 3.5426182746887207,
+        "train_seconds": 1163.2708303928375
+      },
+      {
+        "name": "algebraic_ards_lr6e-3_s42",
+        "lr": 0.006,
+        "cand_name": "lr6e-3",
+        "final_eval_nll": 4.795974700177302,
+        "final_eval_ppl": 121.02228475610487,
+        "final_train_loss": 4.822681427001953,
+        "train_seconds": 1164.4895932674408
+      }
+    ]
+  }
+}

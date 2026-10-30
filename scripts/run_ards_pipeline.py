@@ -233,6 +233,23 @@ def run_phase1_sweep() -> Dict[str, float]:
     print("Candidates: lr in {1.5e-3, 3.0e-3, 6.0e-3} (standard literature sweep)")
     print("=" * 80 + "\n", flush=True)
 
+    results_dir = ROOT / "results" / "hparam_sweep"
+    sel_file = results_dir / "selected.json"
+    sweep_file = results_dir / "sweep_results.json"
+    arms = ["standard_cosine", "algebraic_cosine", "standard_ards", "algebraic_ards"]
+
+    if sel_file.is_file() and sweep_file.is_file():
+        try:
+            d = json.loads(sel_file.read_text()).get("selected", {})
+            if all(arm in d for arm in arms):
+                print(f"[{ist_now_str()}] Phase 1 sweep already completed! Loaded selected learning rates from {sel_file}:", flush=True)
+                selected_lrs = {arm: d[arm]["lr"] for arm in arms}
+                for arm, lr in selected_lrs.items():
+                    print(f"  {arm}: lr={lr}", flush=True)
+                return selected_lrs
+        except Exception as e:
+            print(f"Notice: could not load existing sweep results ({e}), proceeding with sweep execution.", flush=True)
+
     group = "hparam_sweep"
     sweep_jobs = make_sweep_jobs()
     total_sweep_jobs = len(sweep_jobs)
@@ -339,7 +356,7 @@ def run_phase1_sweep() -> Dict[str, float]:
 
     # Commit and push sweep results to GitHub
     print("\nPushing Phase 1 sweep results to GitHub...", flush=True)
-    subprocess.run(["git", "add", "results/hparam_sweep/"], cwd=ROOT, check=True)
+    subprocess.run(["git", "add", "-f", "results/hparam_sweep/"], cwd=ROOT, check=True)
     status = subprocess.check_output(["git", "status", "--porcelain", "results/hparam_sweep/"], cwd=ROOT, text=True)
     if status.strip():
         subprocess.run(
@@ -458,7 +475,7 @@ def run_phase2_main(selected_lrs: Dict[str, float], seeds=(42, 43, 44, 45, 46)):
 
     # Push final results to GitHub
     print("\nPushing final main comparison results to GitHub...", flush=True)
-    subprocess.run(["git", "add", "results/main_125m/"], cwd=ROOT, check=True)
+    subprocess.run(["git", "add", "-f", "results/main_125m/"], cwd=ROOT, check=True)
     status = subprocess.check_output(["git", "status", "--porcelain", "results/main_125m/"], cwd=ROOT, text=True)
     if status.strip():
         subprocess.run(

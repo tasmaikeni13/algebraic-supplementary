@@ -13,9 +13,10 @@ ENV/
 
 # Datasets and large caches
 /data/
-/results/
 results/**/tpu/download/
 results/**/*.log
+results/**/checkpoints/
+results/**/*.npy
 paper/*.aux
 paper/*.log
 paper/*.out
