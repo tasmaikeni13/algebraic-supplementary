@@ -60,7 +60,7 @@ def get_args(argv=None):
     p.add_argument("--lr", type=float, default=3e-3)
     p.add_argument("--min-lr-ratio", type=float, default=0.1)
     p.add_argument("--warmup", type=float, default=0.02, help="fraction (<1) or steps (>=1)")
-    p.add_argument("--schedule", default=None, choices=("cosine", "ards", "wsd", "linear"))
+    p.add_argument("--schedule", default=None, choices=("cosine", "ards", "wsd", "linear", "cubic", "algebraic_cubic"))
     p.add_argument("--decay-frac", type=float, default=0.2, help="WSD decay fraction")
     p.add_argument("--wd", type=float, default=0.1)
     p.add_argument("--b1", type=float, default=0.9)
@@ -82,7 +82,12 @@ def get_args(argv=None):
     p.add_argument("--resume", action="store_true", help="resume from the latest checkpoint in --out")
     args = p.parse_args(argv)
     if args.schedule is None:
-        args.schedule = "ards" if ("ards" in args.preset or "rational" in args.preset) else "cosine"
+        if "cubic" in args.preset:
+            args.schedule = "cubic"
+        elif "ards" in args.preset or "rational" in args.preset:
+            args.schedule = "ards"
+        else:
+            args.schedule = "cosine"
     return args
 
 
@@ -158,6 +163,11 @@ def lr_schedule(args, total_steps):
         prog = jnp.clip((t - warm) / jnp.maximum(1.0, T - warm), 0.0, 1.0)
         if args.schedule == "cosine":
             lr = floor + (peak - floor) * 0.5 * (1.0 + jnp.cos(jnp.pi * prog))
+        elif args.schedule in ("cubic", "algebraic_cubic"):
+            # Pure algebraic cubic Hermite polynomial (Smoothstep):
+            # S(u) = (1 - u)^2 * (1 + 2u)
+            s_u = (1.0 - prog) * (1.0 - prog) * (1.0 + 2.0 * prog)
+            lr = floor + (peak - floor) * s_u
         elif args.schedule == "linear":
             lr = floor + (peak - floor) * (1.0 - prog)
         elif args.schedule == "wsd":

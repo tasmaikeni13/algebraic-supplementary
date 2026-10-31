@@ -659,3 +659,45 @@ def test_safety_guardrails_prevent_remote_uploads():
         else:
             # Script has been completely excised from the repository to prevent remote egress
             assert not script.exists()
+
+
+# ==============================================================================
+# Vector 7: Pure Algebraic Cubic Hermite Polynomial Schedule (Smoothstep)
+# ==============================================================================
+
+
+def test_cubic_algebraic_schedule_boundaries_and_fidelity():
+    """Validate that cubic algebraic schedule replicates cosine boundary conditions with pure ALU math."""
+    from ards.schedule import cubic_algebraic_schedule, get_schedule
+    from ards.configs import get_ards_config
+
+    peak = 0.0015
+    warm = 48
+    T = 2385
+    floor = 0.00015
+
+    sched = cubic_algebraic_schedule(peak_lr=peak, warmup_steps=warm, total_steps=T, min_lr_ratio=0.1)
+
+    # 1. Warmup peak boundary
+    v_peak = float(sched(warm - 1))
+    assert abs(v_peak - peak) < 1e-6, f"Peak mismatch: {v_peak} vs {peak}"
+
+    # 2. Terminal floor boundary
+    v_term = float(sched(T - 1))
+    assert abs(v_term - floor) < 1e-6, f"Terminal floor mismatch: {v_term} vs {floor}"
+
+    # 3. Midpoint
+    mid_step = (T - warm) // 2 + warm
+    v_mid = float(sched(mid_step))
+    expected_mid = floor + (peak - floor) * 0.5
+    assert abs(v_mid - expected_mid) < 1e-4, f"Midpoint mismatch: {v_mid} vs {expected_mid}"
+
+    # 4. Derivative at terminal boundary is zero (no cutoff shock)
+    v_near_end = float(sched(T - 2))
+    assert abs(v_term - v_near_end) < 1e-6, "Terminal derivative should be zero"
+
+    # 5. Config lookup
+    cfg_cubic = get_ards_config("algebraic_cubic")
+    assert cfg_cubic.norm == "rms"
+    assert cfg_cubic.attn == "asinh"
+

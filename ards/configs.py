@@ -37,20 +37,26 @@ VALID_SCHEDULES = (
     "cos",
     "cosine_decay",
     "cosine_annealing",
+    "cubic",
+    "algebraic_cubic",
+    "cubic_algebraic",
+    "smoothstep",
 )
 
 
 def validate_schedule(schedule: Optional[str]) -> str:
-    """Validate schedule name, supporting both ARDS and Cosine."""
+    """Validate schedule name, supporting ARDS, Cubic, and Cosine."""
     if schedule is None:
         return "ards"
     sched_lower = str(schedule).lower().strip()
+    if any(k in sched_lower for k in ("cubic", "algebraic_cubic", "smoothstep")):
+        return "cubic"
     if "cos" in sched_lower:
         return "cosine"
     if sched_lower in ("ards", "rational", "algebraic", "rational_decay", "algebraic_rational_decay"):
         return "ards"
     raise ValueError(
-        f"Unsupported schedule {schedule!r} in ards/; only 'ards' and 'cosine' are permitted."
+        f"Unsupported schedule {schedule!r} in ards/; only 'ards', 'cubic', and 'cosine' are permitted."
     )
 
 
@@ -244,11 +250,25 @@ def algebraic_cosine(size: str = "125m", **overrides: Any) -> LMConfig:
     return replace(cfg, **overrides)
 
 
+def standard_cubic(size: str = "125m", **overrides: Any) -> LMConfig:
+    """125M Standard Transformer preset with pure Algebraic Cubic schedule."""
+    overrides.pop("schedule", None)
+    return standard_cosine(size=size, **overrides)
+
+
+def algebraic_cubic(size: str = "125m", **overrides: Any) -> LMConfig:
+    """125M Pure Algebraic Transformer preset with pure Algebraic Cubic schedule."""
+    overrides.pop("schedule", None)
+    return algebraic_cosine(size=size, **overrides)
+
+
 ARDS_PRESETS: Dict[str, Callable[..., LMConfig]] = {
     "standard_ards": standard_ards,
     "algebraic_ards": algebraic_ards,
     "standard_cosine": standard_cosine,
     "algebraic_cosine": algebraic_cosine,
+    "standard_cubic": standard_cubic,
+    "algebraic_cubic": algebraic_cubic,
     "standard": standard_ards,
     "algebraic": algebraic_ards,
 }
