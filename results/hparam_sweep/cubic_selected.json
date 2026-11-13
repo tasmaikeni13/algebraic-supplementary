@@ -1,0 +1,13 @@
+{
+  "selected": {
+    "algebraic_cubic": {
+      "lr": 0.002,
+      "wd": 0.1
+    },
+    "standard_cubic": {
+      "lr": 0.0015,
+      "wd": 0.1
+    }
+  },
+  "selected_at_ist": "2026-11-12 18:36:40 IST"
+}

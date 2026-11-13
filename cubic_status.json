@@ -1,0 +1,57 @@
+{
+  "phase": "complete",
+  "status": "All sweeps and main 2.5B runs completed successfully for both Standard and Algebraic architectures",
+  "eta_ist": "COMPLETED",
+  "arms_summary": {
+    "algebraic_cubic": {
+      "completed_seeds": [
+        42
+      ],
+      "count": 1,
+      "learning_rate": 0.002,
+      "nll_per_seed": {
+        "42": 2.861387780455292
+      },
+      "ppl_per_seed": {
+        "42": 17.485776525042663
+      },
+      "mean_nll": 2.8614,
+      "std_nll": 0.0,
+      "mean_ppl": 17.49,
+      "std_ppl": 0.0,
+      "final_train_loss": 2.8116893768310547,
+      "train_seconds": 4751.7718234062195
+    },
+    "standard_cubic": {
+      "completed_seeds": [
+        42
+      ],
+      "count": 1,
+      "learning_rate": 0.0015,
+      "nll_per_seed": {
+        "42": 2.914151973411685
+      },
+      "ppl_per_seed": {
+        "42": 18.43317395115513
+      },
+      "mean_nll": 2.9142,
+      "std_nll": 0.0,
+      "mean_ppl": 18.43,
+      "std_ppl": 0.0,
+      "final_train_loss": 2.864569664001465,
+      "train_seconds": 3312.2760837078094
+    }
+  },
+  "baselines": {
+    "algebraic_cosine": {
+      "mean_nll": 2.8761,
+      "mean_ppl": 17.74
+    },
+    "standard_cosine": {
+      "mean_nll": 2.9175,
+      "mean_ppl": 18.49
+    }
+  },
+  "last_updated_ist": "2026-11-12 20:52:20 IST",
+  "last_updated_timestamp": 1794496940.4359984
+}

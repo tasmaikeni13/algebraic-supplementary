@@ -71,6 +71,7 @@ def main():
     p.add_argument("--hosts", default="w0,w1,w2,w3")
     p.add_argument("--no-sync", action="store_true")
     p.add_argument("--skip-done", action="store_true")
+    p.add_argument("--no-hook", action="store_true")
     a = p.parse_args()
     hosts = a.hosts.split(",")
     jobs = json.loads(a.jobs.read_text())
@@ -79,6 +80,11 @@ def main():
     names = [j["name"] for j in jobs]
     if len(names) != len(set(names)):
         p.error("job names must be unique")
+
+    best_std_lr = None
+    if a.group == "main_125m" and not a.no_hook:
+        from scripts.cubic_orchestrator import run_pipeline_hook_if_needed
+        best_std_lr = run_pipeline_hook_if_needed(hosts)
     commands = [remote_command(job, a.group) for job in jobs]
     if not a.no_sync:
         subprocess.run(["bash", str(ROOT / "scripts/setup_workers.sh"), *hosts], cwd=ROOT, check=True)
@@ -95,12 +101,30 @@ def main():
                 print(f"Validation failed for {name} ({e}); re-running...", flush=True)
         t0 = time.monotonic()
         processes = [subprocess.Popen(["ssh", h, command]) for h in hosts]
+        log_jsonl_path = root / name / "log.jsonl"
+        last_logged_step = -1
         try:
             while any(pr.poll() is None for pr in processes):
                 failed = [pr.returncode for pr in processes if pr.poll() not in (None, 0)]
                 if failed:
                     raise RuntimeError(f"{name}: a worker failed with exit codes {failed}; see runs/{a.group}/*.log")
-                time.sleep(1)
+                if log_jsonl_path.is_file():
+                    try:
+                        with log_jsonl_path.open("r") as f:
+                            lines = f.readlines()
+                        if lines:
+                            last_entry = json.loads(lines[-1])
+                            step = last_entry.get("step")
+                            if step is not None and step != last_logged_step:
+                                last_logged_step = step
+                                loss = last_entry.get("loss", float("nan"))
+                                gnorm = last_entry.get("gnorm", float("nan"))
+                                lr = last_entry.get("lr", float("nan"))
+                                tok_s = last_entry.get("tok_per_sec", 0)
+                                print(f"[{name}] step {step} | loss {loss:.4f} | gnorm {gnorm:.3f} | lr {lr:.2e} | {tok_s:,.0f} tok/s", flush=True)
+                    except Exception:
+                        pass
+                time.sleep(2)
             codes = [pr.wait() for pr in processes]
             if any(codes):
                 raise RuntimeError(f"{name}: worker exit codes {codes}")
@@ -137,6 +161,17 @@ def main():
             )
 
         print(f"{name}: completed in {(time.monotonic()-t0)/60:.1f} min", flush=True)
+
+    if a.group == "main_125m" and not a.no_hook:
+        from scripts.cubic_orchestrator import run_standard_cubic_main, generate_consolidated_comparison
+        main_flag = ROOT / "results" / "main_125m" / "standard_cubic_main_done.flag"
+        if not main_flag.is_file():
+            if best_std_lr is None:
+                from scripts.cubic_orchestrator import run_pipeline_hook_if_needed
+                best_std_lr = run_pipeline_hook_if_needed(hosts)
+            run_standard_cubic_main(best_lr=best_std_lr, hosts=hosts)
+            generate_consolidated_comparison()
+
     return 0
 
 

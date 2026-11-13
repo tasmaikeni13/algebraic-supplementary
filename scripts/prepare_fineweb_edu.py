@@ -16,10 +16,13 @@ import time
 import numpy as np
 import pyarrow.parquet as pq
 import requests
-
-from algebraic.tokenizer import get_tokenizer
+import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from algebraic.tokenizer import get_tokenizer
 DATASET = "HuggingFaceFW/fineweb-edu"
 EOT = 2
 
@@ -46,22 +49,43 @@ def resolve_shards(revision="main", dataset_path="sample/10BT"):
     return pinned, sorted(shards)
 
 
-def download_file(url, destination):
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_suffix(".download")
-    for attempt in range(4):
-        try:
-            with requests.get(url, stream=True, timeout=(30, 120)) as response:
-                response.raise_for_status()
-                with temporary.open("wb") as stream:
-                    for chunk in response.iter_content(8 * 1024 * 1024):
-                        stream.write(chunk)
-            temporary.replace(destination)
-            return
-        except requests.RequestException:
-            if attempt == 3:
-                raise
-            time.sleep(2 ** attempt)
+def get_shard(source, pinned, raw_dir):
+    # Check raw_dir first
+    local = raw_dir / Path(source).name
+    if local.is_file():
+        return local
+    # Check HuggingFace hub cache
+    snapshot_path = (
+        Path.home()
+        / ".cache"
+        / "huggingface"
+        / "hub"
+        / f"datasets--{DATASET.replace('/', '--')}"
+        / "snapshots"
+        / pinned
+        / source
+    )
+    if snapshot_path.is_file():
+        return snapshot_path
+    # Download via huggingface_hub
+    from huggingface_hub import hf_hub_download
+    downloaded = hf_hub_download(
+        repo_id=DATASET,
+        repo_type="dataset",
+        filename=source,
+        revision=pinned,
+    )
+    return Path(downloaded)
+
+
+def cleanup_shard(path):
+    try:
+        resolved = path.resolve()
+        path.unlink(missing_ok=True)
+        if resolved.is_file() and resolved != path:
+            resolved.unlink(missing_ok=True)
+    except Exception as e:
+        print(f"Warning cleaning {path}: {e}", flush=True)
 
 
 def sha256_file(path):
@@ -126,9 +150,7 @@ def build_fineweb_dataset(output_dir, target_train_tokens=2_500_000_000,
     for source in shards:
         if counts["train"] == target_train_tokens and counts["valid"] == target_val_tokens:
             break
-        local = raw_dir / Path(source).name
-        if not local.is_file():
-            download_file(f"https://huggingface.co/datasets/{DATASET}/resolve/{pinned}/{source}", local)
+        local = get_shard(source, pinned, raw_dir)
         sources.append({"path": source, "sha256": sha256_file(local)})
         for batch in pq.ParquetFile(local).iter_batches(batch_size=2048, columns=["text"]):
             texts = batch.column(0).to_pylist()
@@ -151,7 +173,7 @@ def build_fineweb_dataset(output_dir, target_train_tokens=2_500_000_000,
                 break
         print(f"{source}: train {counts['train']:,}/{target_train_tokens:,}; valid {counts['valid']:,}/{target_val_tokens:,}", flush=True)
         if clean_raw:
-            local.unlink()
+            cleanup_shard(local)
     if clean_raw:
         shutil.rmtree(output_dir / "fineweb_raw", ignore_errors=True)
     for array in arrays:

@@ -1,0 +1,86 @@
+{
+  "completed_at_ist": "2026-11-12 18:36:40 IST",
+  "token_budget_per_run": 600000000,
+  "selected_learning_rates": {
+    "algebraic_cubic": 0.002,
+    "standard_cubic": 0.0015
+  },
+  "runs": {
+    "algebraic_cubic": [
+      {
+        "name": "algebraic_cubic_lr2e-3_s42",
+        "lr": 0.002,
+        "cand_name": "lr2e-3",
+        "final_eval_nll": 3.526384721036817,
+        "final_eval_ppl": 34.00082268825531,
+        "final_train_loss": 3.504059314727783,
+        "train_seconds": 1164.427482843399
+      },
+      {
+        "name": "algebraic_cubic_lr1e-3_s42",
+        "lr": 0.001,
+        "cand_name": "lr1e-3",
+        "final_eval_nll": 3.5755659595864717,
+        "final_eval_ppl": 35.71482824624711,
+        "final_train_loss": 3.5534114837646484,
+        "train_seconds": 1164.8486738204956
+      },
+      {
+        "name": "algebraic_cubic_lr1.5e-3_s42",
+        "lr": 0.0015,
+        "cand_name": "lr1.5e-3",
+        "final_eval_nll": 3.622510061889398,
+        "final_eval_ppl": 37.431405147566096,
+        "final_train_loss": 3.60282301902771,
+        "train_seconds": 1163.6057674884796
+      },
+      {
+        "name": "algebraic_cubic_lr3e-3_s42",
+        "lr": 0.003,
+        "cand_name": "lr3e-3",
+        "final_eval_nll": 3.8184340664597807,
+        "final_eval_ppl": 45.532851046420205,
+        "final_train_loss": 3.798720598220825,
+        "train_seconds": 1164.467943906784
+      }
+    ],
+    "standard_cubic": [
+      {
+        "name": "standard_cubic_lr1.5e-3_s42",
+        "lr": 0.0015,
+        "cand_name": "lr1.5e-3",
+        "final_eval_nll": 3.675539133978672,
+        "final_eval_ppl": 39.4699307027364,
+        "final_train_loss": 3.658890724182129,
+        "train_seconds": 810.4821879863739
+      },
+      {
+        "name": "standard_cubic_lr2e-3_s42",
+        "lr": 0.002,
+        "cand_name": "lr2e-3",
+        "final_eval_nll": 3.7306793205073623,
+        "final_eval_ppl": 41.707431256073114,
+        "final_train_loss": 3.713593006134033,
+        "train_seconds": 809.5053186416626
+      },
+      {
+        "name": "standard_cubic_lr1e-3_s42",
+        "lr": 0.001,
+        "cand_name": "lr1e-3",
+        "final_eval_nll": 3.8922280796238633,
+        "final_eval_ppl": 49.0199853687036,
+        "final_train_loss": 3.8768229484558105,
+        "train_seconds": 810.2353520393372
+      },
+      {
+        "name": "standard_cubic_lr3e-3_s42",
+        "lr": 0.003,
+        "cand_name": "lr3e-3",
+        "final_eval_nll": 3.937040129645926,
+        "final_eval_ppl": 51.266633919708894,
+        "final_train_loss": 3.9232640266418457,
+        "train_seconds": 810.5517899990082
+      }
+    ]
+  }
+}

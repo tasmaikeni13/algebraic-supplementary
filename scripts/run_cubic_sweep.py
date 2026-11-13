@@ -44,15 +44,17 @@ def update_status(data: Dict[str, Any]) -> None:
     data["last_updated_ist"] = ist_now_str()
     data["last_updated_timestamp"] = time.time()
     try:
-        STATUS_FILE.write_text(json.dumps(data, indent=2))
+        tmp = STATUS_FILE.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(STATUS_FILE)
     except Exception as e:
         print(f"Warning writing {STATUS_FILE}: {e}", flush=True)
 
 
 def clean_storage(hosts=HOSTS, prune_run_dir: Path = None) -> None:
     """Strict storage preservation across the cluster."""
-    if prune_run_dir:
-        for h in hosts:
+    for h in hosts:
+        if prune_run_dir:
             subprocess.run(
                 ["ssh", h, f"rm -rf {shlex.quote(str(prune_run_dir / 'ckpt'))} 2>/dev/null || true"],
                 check=False
@@ -61,6 +63,10 @@ def clean_storage(hosts=HOSTS, prune_run_dir: Path = None) -> None:
                 ["ssh", h, f"rm -f {shlex.quote(str(prune_run_dir))}/*.npy {shlex.quote(str(prune_run_dir))}/*.ckpt 2>/dev/null || true"],
                 check=False
             )
+        subprocess.run(
+            ["ssh", h, "rm -rf /tmp/pytest* /tmp/tpu_logs/* /tmp/*.log* 2>/dev/null || true"],
+            check=False
+        )
 
 
 def make_cubic_jobs(lrs=(0.0010, 0.0015, 0.0025), seeds=(42, 43)) -> List[Dict[str, Any]]:

@@ -8,12 +8,12 @@
       "lr": 0.0015,
       "wd": 0.1
     },
-    "standard_ards": {
+    "standard_cubic": {
       "lr": 0.0015,
       "wd": 0.1
     },
-    "algebraic_ards": {
-      "lr": 0.0015,
+    "algebraic_cubic": {
+      "lr": 0.002,
       "wd": 0.1
     }
   },

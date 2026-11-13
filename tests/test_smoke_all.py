@@ -1,7 +1,7 @@
 """Comprehensive Requirement-Driven Test Suite for 16-Architecture Smoke Verification.
 
 Validates Requirement R5 and Milestone 4 Acceptance Criteria:
-1. Exact parameter counts for all 16 models (14 hybrid presets + 2 ARDS variants):
+1. Exact parameter counts for all 16 models (14 hybrid presets + 2 cubic presets):
    - 8 Softmax attention models: exact 110,120,448 parameters (125M)
    - 8 Asinh attention models: exact 110,122,128 parameters (125M, +1,680 delta)
 2. Single-step synthetic AdamW optimization pass on CPU (proxy shapes, fast execution).
@@ -13,7 +13,6 @@ Validates Requirement R5 and Milestone 4 Acceptance Criteria:
 4. CLI smoke runner scripts/smoke_all.py verification (options: --preset, --all, --out, --chip, --eval-smoke).
 5. Fast smoke evaluation routes for zero-shot benchmarks (8 tasks) and recall benchmarks (4 tasks).
 6. Safety isolation: remote upload stubs exit 0 without network access; long-training guard intercepts >100 steps.
-7. Regression test for ards/train.py --tiny duplicate flash_block keyword argument.
 """
 
 import json
@@ -37,15 +36,15 @@ from algebraic.model import (
     init_params,
     position_tables,
 )
-from ards.configs import ARDS_PRESETS, get_ards_config
+from algebraic.config import build, PRESETS
 from hybrid.registry import HYBRID_PRESETS, get_hybrid
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# 14 Hybrid Presets + 2 ARDS Presets = 16 Architectures
+# 14 Hybrid Presets + 2 Cubic Presets = 16 Architectures
 HYBRID_NAMES = sorted(HYBRID_PRESETS.keys())
-ARDS_NAMES = ["standard_ards", "algebraic_ards"]
-ALL_16_PRESETS = HYBRID_NAMES + ARDS_NAMES
+CUBIC_NAMES = ["standard_cubic", "algebraic_cubic"]
+ALL_16_PRESETS = HYBRID_NAMES + CUBIC_NAMES
 
 
 @pytest.fixture(autouse=True)
@@ -57,11 +56,11 @@ def float32_context():
 
 
 def get_model_config(preset: str, size: str = "125m", **overrides):
-    """Helper to load config from hybrid or ards registries."""
+    """Helper to load config from hybrid or algebraic registries."""
     if preset in HYBRID_PRESETS:
         return get_hybrid(preset)(size=size, **overrides)
-    elif preset in ARDS_PRESETS:
-        return get_ards_config(preset, size=size, **overrides)
+    elif preset in PRESETS:
+        return build(preset, size=size, **overrides)
     raise KeyError(f"Unknown preset {preset!r}")
 
 
@@ -89,8 +88,8 @@ def test_all_16_architectures_exact_parameter_counts_125m(preset):
 def test_asinh_delta_is_exactly_1680_parameters():
     """Verify that asinh attention adds exactly +1,680 parameters over softmax."""
     key = jax.random.PRNGKey(0)
-    std_cfg = get_model_config("standard_ards", size="125m")
-    alg_cfg = get_model_config("algebraic_ards", size="125m")
+    std_cfg = get_model_config("standard_cubic", size="125m")
+    alg_cfg = get_model_config("algebraic_cubic", size="125m")
 
     n_std = count_params(init_params(std_cfg, key))
     n_alg = count_params(init_params(alg_cfg, key))
@@ -344,7 +343,7 @@ def test_smoke_all_cli_eval_smoke(tmp_path):
     cmd = [
         sys.executable,
         str(REPO_ROOT / "scripts" / "smoke_all.py"),
-        "--preset", "standard_ards",
+        "--preset", "standard_cubic",
         "--tiny",
         "--steps", "1",
         "--device", "cpu",
@@ -411,13 +410,6 @@ def test_safety_guardrails_prevent_remote_uploads():
             assert not script_path.exists()
 
 
-def test_safety_guardrails_intercept_long_runs():
-    """Verify ARDS training runner intercepts runs exceeding 100 steps."""
-    from ards.train import run_ards_training
-    with pytest.raises(ValueError, match="Training runs exceeding 100 steps prohibited"):
-        run_ards_training(arm="standard_ards", steps=101, allow_long_run=False)
-
-
 def test_safety_guardrails_cli_intercept_long_runs(tmp_path):
     """Verify scripts/smoke_all.py intercepts >100 steps unless --allow-long-run is passed."""
     # 1. Prohibited run (>100 steps without --allow-long-run)
@@ -453,27 +445,6 @@ def test_safety_guardrails_cli_intercept_long_runs(tmp_path):
     data = json.loads(out_file.read_text())
     assert data["all_passed"] is True
     assert data["steps"] == 101
-
-
-# ==============================================================================
-# Vector 7: Regression Test for ards/train.py --tiny Finding
-# ==============================================================================
-
-
-def test_regression_ards_train_tiny_flash_block(tmp_path):
-    """Verify that ards/train.py with --tiny executes without multiple values for 'flash_block'."""
-    from ards.train import run_ards_training
-
-    # Must complete step 1 without TypeError
-    out_std = tmp_path / "std_tiny"
-    res_std = run_ards_training(arm="standard_ards", tiny=True, steps=1, out_dir=str(out_std))
-    assert res_std["status"] == "passed"
-    assert res_std["completed_steps"] == 1
-
-    out_alg = tmp_path / "alg_tiny"
-    res_alg = run_ards_training(arm="algebraic_ards", tiny=True, steps=1, out_dir=str(out_alg))
-    assert res_alg["status"] == "passed"
-    assert res_alg["completed_steps"] == 1
 
 
 # ==============================================================================

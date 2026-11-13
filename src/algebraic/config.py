@@ -32,24 +32,44 @@ def algebraic(size: str = "proxy", **overrides) -> LMConfig:
     return replace(cfg, **overrides)
 
 
-PRESETS = {"standard": standard, "algebraic": algebraic}
+def standard_cubic(size: str = "proxy", **overrides) -> LMConfig:
+    """125M Standard Transformer with pure Algebraic Cubic schedule."""
+    overrides.pop("schedule", None)
+    return standard(size, **overrides)
+
+
+def algebraic_cubic(size: str = "proxy", **overrides) -> LMConfig:
+    """125M Pure Algebraic Transformer with pure Algebraic Cubic schedule."""
+    overrides.pop("schedule", None)
+    return algebraic(size, **overrides)
+
+
+def standard_cosine(size: str = "proxy", **overrides) -> LMConfig:
+    """125M Standard Transformer with Cosine schedule."""
+    overrides.pop("schedule", None)
+    return standard(size, **overrides)
+
+
+def algebraic_cosine(size: str = "proxy", **overrides) -> LMConfig:
+    """125M Pure Algebraic Transformer with Cosine schedule."""
+    overrides.pop("schedule", None)
+    return algebraic(size, **overrides)
+
+
+PRESETS = {
+    "standard": standard,
+    "algebraic": algebraic,
+    "standard_cubic": standard_cubic,
+    "algebraic_cubic": algebraic_cubic,
+    "standard_cosine": standard_cosine,
+    "algebraic_cosine": algebraic_cosine,
+}
 
 
 def build(preset: str, size: str = "125m", **overrides) -> LMConfig:
-    """Build an LMConfig for a standard, algebraic, ards, or hybrid preset.
-
-    Keeps PRESETS strictly limited to {"standard", "algebraic"} for backward
-    compatibility, and delegates ARDS presets to ards.configs.ARDS_PRESETS
-    and hybrid presets to hybrid.registry.HYBRID_PRESETS.
-    """
+    """Build an LMConfig for a standard, algebraic, cubic, or hybrid preset."""
     if preset in PRESETS:
         return PRESETS[preset](size, **overrides)
-    try:
-        from ards.configs import ARDS_PRESETS
-        if preset in ARDS_PRESETS:
-            return ARDS_PRESETS[preset](size, **overrides)
-    except ImportError:
-        pass
     try:
         from hybrid.registry import HYBRID_PRESETS
         if preset in HYBRID_PRESETS:

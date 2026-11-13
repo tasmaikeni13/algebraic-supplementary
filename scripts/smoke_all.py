@@ -3,7 +3,7 @@
 
 Verifies:
 1. All 14 hybrid presets from hybrid/registry.py (H01 - H14).
-2. Comparison presets from ards/configs.py (standard_ards, algebraic_ards, standard_cosine, algebraic_cosine).
+2. Standalone presets from algebraic/config.py (standard_cubic, algebraic_cubic, standard_cosine, algebraic_cosine).
 3. 1-step synthetic AdamW optimization pass with pure XLA execution.
 4. Finite positive loss and non-zero finite gradients.
 5. Exact parameter count:
@@ -51,12 +51,12 @@ CANONICAL_HYBRIDS: List[str] = [
     "hybrid_cayley_alu_asinh_ce",             # H14
 ]
 
-CANONICAL_ARDS: List[str] = [
-    "standard_ards",
-    "algebraic_ards",
+CANONICAL_CUBIC: List[str] = [
+    "standard_cubic",
+    "algebraic_cubic",
 ]
 
-ALL_16_PRESETS: List[str] = CANONICAL_HYBRIDS + CANONICAL_ARDS
+ALL_16_PRESETS: List[str] = CANONICAL_HYBRIDS + CANONICAL_CUBIC
 
 EXPECTED_PARAMS_125M = {
     "softmax": 110_120_448,
@@ -70,20 +70,22 @@ EXPECTED_PARAMS_PROXY = {
 
 
 def resolve_preset_name(name: str) -> Tuple[str, str]:
-    """Resolve preset name to (canonical_name, category) where category is 'hybrid' or 'ards'."""
+    """Resolve preset name to (canonical_name, category) where category is 'hybrid' or 'cubic'."""
     from hybrid.registry import HYBRID_ALIASES, HYBRID_PRESETS, ORDERED_HYBRID_NAMES
-    from ards.configs import ARDS_PRESETS
+    from algebraic.config import PRESETS
 
     name_clean = name.strip()
     if name_clean in HYBRID_ALIASES:
         return HYBRID_ALIASES[name_clean], "hybrid"
     if name_clean in ORDERED_HYBRID_NAMES or name_clean in HYBRID_PRESETS:
         return name_clean, "hybrid"
-    if name_clean in ARDS_PRESETS:
-        if name_clean in ("standard_cosine", "algebraic_cosine"):
-            return name_clean, "ards"
-        canonical = "standard_ards" if name_clean in ("standard", "standard_ards") else "algebraic_ards"
-        return canonical, "ards"
+    if name_clean in PRESETS:
+        canonical = name_clean
+        if canonical == "standard":
+            canonical = "standard_cubic"
+        elif canonical == "algebraic":
+            canonical = "algebraic_cubic"
+        return canonical, "cubic"
 
     # Check case-insensitive
     name_lower = name_clean.lower()
@@ -93,12 +95,14 @@ def resolve_preset_name(name: str) -> Tuple[str, str]:
     for k in ORDERED_HYBRID_NAMES:
         if k.lower() == name_lower:
             return k, "hybrid"
-    for k in ARDS_PRESETS:
+    for k in PRESETS:
         if k.lower() == name_lower:
-            if k in ("standard_cosine", "algebraic_cosine"):
-                return k, "ards"
-            canonical = "standard_ards" if k in ("standard", "standard_ards") else "algebraic_ards"
-            return canonical, "ards"
+            canonical = k
+            if canonical == "standard":
+                canonical = "standard_cubic"
+            elif canonical == "algebraic":
+                canonical = "algebraic_cubic"
+            return canonical, "cubic"
 
     raise ValueError(f"Unknown preset {name!r}. Available: {ALL_16_PRESETS}")
 
@@ -119,7 +123,7 @@ def load_model_config(
 ):
     """Construct LMConfig for the given preset."""
     from hybrid.registry import get_hybrid
-    from ards.configs import get_ards_config
+    from algebraic.config import build
 
     overrides: Dict[str, Any] = {
         "seq_len": seq_len,
@@ -146,7 +150,7 @@ def load_model_config(
     if category == "hybrid":
         return get_hybrid(canonical_name)(size=size, **overrides)
     else:
-        return get_ards_config(canonical_name, size=size, **overrides)
+        return build(canonical_name, size=size, **overrides)
 
 
 def execute_single_smoke_step(

@@ -60,7 +60,7 @@ def get_args(argv=None):
     p.add_argument("--lr", type=float, default=3e-3)
     p.add_argument("--min-lr-ratio", type=float, default=0.1)
     p.add_argument("--warmup", type=float, default=0.02, help="fraction (<1) or steps (>=1)")
-    p.add_argument("--schedule", default=None, choices=("cosine", "ards", "wsd", "linear", "cubic", "algebraic_cubic"))
+    p.add_argument("--schedule", default=None, choices=("cosine", "cubic", "algebraic_cubic", "wsd", "linear"))
     p.add_argument("--decay-frac", type=float, default=0.2, help="WSD decay fraction")
     p.add_argument("--wd", type=float, default=0.1)
     p.add_argument("--b1", type=float, default=0.9)
@@ -84,8 +84,6 @@ def get_args(argv=None):
     if args.schedule is None:
         if "cubic" in args.preset:
             args.schedule = "cubic"
-        elif "ards" in args.preset or "rational" in args.preset:
-            args.schedule = "ards"
         else:
             args.schedule = "cosine"
     return args
@@ -174,9 +172,8 @@ def lr_schedule(args, total_steps):
             start = 1.0 - args.decay_frac
             frac = jnp.clip((prog - start) / args.decay_frac, 0.0, 1.0)
             lr = peak - (peak - floor) * frac
-        else:  # Rational decay with scale 0.8 T.
-            d = jnp.maximum(0.0, t - warm) / (0.8 * T)
-            lr = peak / jnp.sqrt(1.0 + d * d)
+        else:
+            raise ValueError(f"unknown schedule: {args.schedule}")
         return jnp.where(t < warm, peak * warm_f, lr)
 
     return fn, warm

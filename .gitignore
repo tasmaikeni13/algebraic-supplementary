@@ -25,7 +25,7 @@ paper/*.out
 .DS_Store
 *.swp
 *.swo
-runs/
+/runs/
 *.egg-info/
 build/
 dist/
