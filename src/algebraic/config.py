@@ -71,9 +71,12 @@ def build(preset: str, size: str = "125m", **overrides) -> LMConfig:
     if preset in PRESETS:
         return PRESETS[preset](size, **overrides)
     try:
-        from hybrid.registry import HYBRID_PRESETS
+        from hybrid.registry import HYBRID_PRESETS, HYBRID_ALIASES
         if preset in HYBRID_PRESETS:
             return HYBRID_PRESETS[preset](size, **overrides)
+        if preset in HYBRID_ALIASES:
+            canonical = HYBRID_ALIASES[preset]
+            return HYBRID_PRESETS[canonical](size, **overrides)
     except ImportError:
         pass
     raise KeyError(f"unknown preset {preset!r}")

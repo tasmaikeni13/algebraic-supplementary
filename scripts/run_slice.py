@@ -81,10 +81,6 @@ def main():
     if len(names) != len(set(names)):
         p.error("job names must be unique")
 
-    best_std_lr = None
-    if a.group == "main_125m" and not a.no_hook:
-        from scripts.cubic_orchestrator import run_pipeline_hook_if_needed
-        best_std_lr = run_pipeline_hook_if_needed(hosts)
     commands = [remote_command(job, a.group) for job in jobs]
     if not a.no_sync:
         subprocess.run(["bash", str(ROOT / "scripts/setup_workers.sh"), *hosts], cwd=ROOT, check=True)
@@ -161,16 +157,6 @@ def main():
             )
 
         print(f"{name}: completed in {(time.monotonic()-t0)/60:.1f} min", flush=True)
-
-    if a.group == "main_125m" and not a.no_hook:
-        from scripts.cubic_orchestrator import run_standard_cubic_main, generate_consolidated_comparison
-        main_flag = ROOT / "results" / "main_125m" / "standard_cubic_main_done.flag"
-        if not main_flag.is_file():
-            if best_std_lr is None:
-                from scripts.cubic_orchestrator import run_pipeline_hook_if_needed
-                best_std_lr = run_pipeline_hook_if_needed(hosts)
-            run_standard_cubic_main(best_lr=best_std_lr, hosts=hosts)
-            generate_consolidated_comparison()
 
     return 0
 
