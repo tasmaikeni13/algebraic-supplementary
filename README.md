@@ -2,13 +2,7 @@
 
 ## Factorial Ablation of 14 Hybrid Architectures & Algebraic Transformer Benchmark
 
-> **Status**: **FINAL COMPLETED RUNS** (Completed: `2026-11-14 02:02:40 IST`)  
-> **Scale**: 125M Parameters | **Tokens per Model**: 2,500,000,000 (2.5B tokens of FineWeb-Edu each)  
-> **Hardware**: Google Cloud TPU v4-32 slice (16 chips across 4 workers: w0, w1, w2, w3)  
-> **Optimizer**: AdamW (`lr=0.0015`, `wd=0.1`, `b2=0.95`, `warmup=0.02`, `min_lr_ratio=0.1`)  
-> **Seed**: 42 (Single fixed seed across all runs for strict scientific parity)
-
----
+This repository contains the supplementary experimental suite, raw training logs, and factorial evaluation scripts for the Algebraic Transformer. Pretraining was conducted at 125M parameter scale on 2.5B tokens of FineWeb-Edu across a Google Cloud TPU v4-32 slice with AdamW (seed 42).
 
 ### 1. Complete 16-Architecture Factorial Matrix (Cosine Schedule Parity)
 
@@ -41,14 +35,14 @@ This benchmark evaluates all 16 combinatorial permutations ($2^4$) of the 4 Tran
 
 ### 2. Standalone Pure-ALU Cubic Hermite Schedule vs Cosine
 
-Evaluated on an identical 2.5B FineWeb-Edu token budget (125M parameter scale, TPU v4-32). Table 1 reported single-seed values (Seed 42) for exact factorial comparison; below, we compare the Pure Algebraic Cubic schedule against both the Seed 42 baseline and the 4-seed Cosine baseline mean:
+Evaluated on an identical 2.5B FineWeb-Edu token budget (125M parameter scale, TPU v4-32). Table 1 reported single-seed values (Seed 42) for exact factorial comparison; below, I compare the Pure Algebraic Cubic schedule against both the Seed 42 baseline and the 4-seed Cosine baseline mean:
 
 | Architecture | Schedule | Schedule Math | Eval NLL | Eval PPL | vs Cosine Baseline (Seed 42) | vs Cosine Mean (4 Seeds) |
 |:---|:---|:---|:---:|:---:|:---:|:---:|
-| **Algebraic + Cubic (Ours)** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$** | **`2.8614`** | **`17.49`** | **`-0.0143`** (vs 2.8757) | **`-0.0147`** (vs 2.8761) |
+| **Algebraic + Cubic** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$** | **`2.8614`** | **`17.49`** | **`-0.0143`** (vs 2.8757) | **`-0.0147`** (vs 2.8761) |
 | **Algebraic + Cosine** | Cosine | $\frac{1}{2}(1 + \cos(\pi u))$ | `2.8757` (s42) / `2.8761` (mean) | `17.74` | *baseline* | *baseline* |
 | | | | | | | |
-| **Standard + Cubic (Ours)** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$** | **`2.9142`** | **`18.43`** | `+0.0006` (vs 2.9136) | **`-0.0033`** (vs 2.9175) |
+| **Standard + Cubic** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$** | **`2.9142`** | **`18.43`** | `+0.0006` (vs 2.9136) | **`-0.0033`** (vs 2.9175) |
 | **Standard + Cosine** | Cosine | $\frac{1}{2}(1 + \cos(\pi u))$ | `2.9136` (s42) / `2.9175` (mean) | `18.42` / `18.49` | *baseline* | *baseline* |
 
 > **Key Takeaway**: Pure-ALU Cubic Hermite decay matches or outperforms transcendental Cosine decay on both Standard and Algebraic Transformer architectures, demonstrating that learning rate schedules can also operate without transcendental functions.
@@ -96,3 +90,8 @@ Every primitive across the full Algebraic Transformer forward, backward, and opt
 - `cubic/`: Standalone pure-ALU Hermite polynomial schedule package and tests.
 - `results/hybrids/`: Full JSON reports (`hybrid_comparison.json`) and summary README.
 - `tests/`: Pytest suite verifying mathematical invariants, primitive audits, and XLA compilation.
+
+---
+
+### 6. Acknowledgments
+Special thanks to Google's TPU Research Cloud (TRC) team for generously providing and extending Cloud TPU v4-32 compute access, which made training and evaluating all 14 hybrid architectures and schedule benchmarks possible.
