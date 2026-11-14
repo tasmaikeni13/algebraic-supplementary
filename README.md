@@ -13,7 +13,7 @@
 ### 1. Complete 16-Architecture Factorial Matrix (Cosine Schedule Parity)
 
 This benchmark evaluates all 16 combinatorial permutations ($2^4$) of the 4 Transformer architectural components:
-- **Position**: `RoPE` (Standard transcendental) vs `Cayley` (Pure algebraic $SO(n)$ rational rotation)
+- **Position**: `RoPE` (Standard transcendental) vs `Cayley` (Pure algebraic $SO(d)$ rational rotation, head dimension $d_h=64$)
 - **FFN**: `SwiGLU` (Standard transcendental $\sigma(x)$) vs `ALU-GLU` (Pure algebraic rational curve $x / \sqrt{1 + x^2}$)
 - **Attention**: `Softmax` (Standard transcendental $\exp(x)$) vs `Asinh` (Pure algebraic power attention $\rho(s/8)^{16}$ + QK-norm + learned sink)
 - **Head**: `CE` (Standard cross-entropy) vs `Alg-CE` (Pure algebraic gradient of rational likelihood $\rho(z/2)^8$)
@@ -41,40 +41,40 @@ This benchmark evaluates all 16 combinatorial permutations ($2^4$) of the 4 Tran
 
 ### 2. Standalone Pure-ALU Cubic Hermite Schedule vs Cosine
 
-Evaluated on identical 2.5B FineWeb-Edu token budget (Seed 42, 125M scale):
+Evaluated on an identical 2.5B FineWeb-Edu token budget (125M parameter scale, TPU v4-32). Table 1 reported single-seed values (Seed 42) for exact factorial comparison; below, we compare the Pure Algebraic Cubic schedule against both the Seed 42 baseline and the 4-seed Cosine baseline mean:
 
-| Architecture | Schedule | Schedule Math | Eval NLL | Eval PPL | vs Cosine Baseline |
-|:---|:---|:---|:---:|:---:|:---:|
-| **Algebraic + Cubic (Ours)** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$ (Pure ALU)** | **`2.8614`** | **`17.49`** | **`-0.0147` (Outperforms Cosine)** |
-| **Algebraic + Cosine** | Cosine | $\frac{1}{2}(1 + \cos(\pi u))$ (Transcendental) | `2.8761` | `17.74` | *baseline* |
-| | | | | | |
-| **Standard + Cubic (Ours)** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$ (Pure ALU)** | **`2.9142`** | **`18.43`** | **`-0.0033` (Outperforms Cosine)** |
-| **Standard + Cosine** | Cosine | $\frac{1}{2}(1 + \cos(\pi u))$ (Transcendental) | `2.9175` | `18.49` | *baseline* |
+| Architecture | Schedule | Schedule Math | Eval NLL | Eval PPL | vs Cosine Baseline (Seed 42) | vs Cosine Mean (4 Seeds) |
+|:---|:---|:---|:---:|:---:|:---:|:---:|
+| **Algebraic + Cubic (Ours)** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$** | **`2.8614`** | **`17.49`** | **`-0.0143`** (vs 2.8757) | **`-0.0147`** (vs 2.8761) |
+| **Algebraic + Cosine** | Cosine | $\frac{1}{2}(1 + \cos(\pi u))$ | `2.8757` (s42) / `2.8761` (mean) | `17.74` | *baseline* | *baseline* |
+| | | | | | | |
+| **Standard + Cubic (Ours)** | **Pure Algebraic Cubic** | **$S(u) = (1 - u)^2(1 + 2u)$** | **`2.9142`** | **`18.43`** | `+0.0006` (vs 2.9136) | **`-0.0033`** (vs 2.9175) |
+| **Standard + Cosine** | Cosine | $\frac{1}{2}(1 + \cos(\pi u))$ | `2.9136` (s42) / `2.9175` (mean) | `18.42` / `18.49` | *baseline* | *baseline* |
 
-> **Key Takeaway**: Pure-ALU Cubic Hermite decay matches or outperforms transcendental Cosine decay on both Standard and Algebraic Transformer architectures, proving learning rate schedules can also be completely non-transcendental.
+> **Key Takeaway**: Pure-ALU Cubic Hermite decay matches or outperforms transcendental Cosine decay on both Standard and Algebraic Transformer architectures, demonstrating that learning rate schedules can also operate without transcendental functions.
 
 ---
 
-### 3. Empirical Factorial Attribution & ANOVA Analysis
+### 3. Empirical Factorial Attribution and Variance Analysis
 
-The factorial ablation across 16 combinations reveals three definitive scientific conclusions:
+The 16-model factorial ablation reveals three primary empirical findings:
 
-#### A. The Dual Pillars: Asinh Attention and Alg-CE Loss
+#### A. Individual Component Attribution: Asinh Attention and Alg-CE Loss
 1. **Asinh Attention Alone (`H03`: -0.0162 NLL / -0.29 PPL)**:
-   - Swapping in Bounded Algebraic Power Attention $\rho(s/8)^{16}$ with QK-norm and learned sink captures **~43% of the entire performance advantage** alone.
-   - Bounded polynomial algebraic decay completely stabilizes attention entropy across all 12 layers and prevents the attention sink collapse observed in standard Softmax.
+   - Introducing bounded algebraic power attention $\rho(s/8)^{16}$ with QK-norm and a learned sink accounts for **42.6% of the total architectural advantage** in isolation.
+   - Bounded polynomial algebraic decay stabilizes attention entropy across all 12 layers and prevents the attention sink collapse observed in standard Softmax.
 2. **Alg-CE Output Head Alone (`H04`: -0.0123 NLL / -0.22 PPL)**:
-   - Swapping in the algebraic likelihood head $\rho(z/2)^8$ captures **~32% of the entire performance advantage** alone.
-   - Alg-CE's exact algebraic gradient acts as an intrinsic regularizer that suppresses logit norm divergence ($\|z\| \to \infty$).
+   - Introducing the algebraic likelihood head $\rho(z/2)^8$ accounts for **32.5% of the total architectural advantage** in isolation.
+   - The exact algebraic gradient of Alg-CE acts as an intrinsic regularizer that suppresses logit norm divergence ($\|z\| \to \infty$).
 
-#### B. Super-Additive Synergy: The Attention-Head Resonance
-- In isolation, Asinh (-0.0162) and Alg-CE (-0.0123) sum to -0.0285 NLL.
-- However, when combined in **`H10` (`hybrid_rope_swiglu_asinh_alg_ce`)**, the drop is **`-0.0384 NLL`** (PPL **17.73**).
-- This demonstrates a **super-additive synergistic bonus of -0.010 NLL**: eliminating transcendental functions at both the internal attention representation and the final output likelihood prevents gradient mismatch and stabilizes AdamW second-moment tracking throughout training.
+#### B. Synergistic Interaction Between Attention and Likelihood
+- In isolation, the linear sum of Asinh (-0.0162) and Alg-CE (-0.0123) is -0.0285 NLL.
+- When combined in **`H10` (`hybrid_rope_swiglu_asinh_alg_ce`)**, the observed reduction reaches **`-0.0384 NLL`** (PPL **17.73**).
+- This reflects a **super-additive synergy of -0.0099 nats** (~ -0.010 NLL): eliminating transcendental functions at both the internal attention mechanism and the final output likelihood prevents gradient scale mismatch and stabilizes optimizer second-moment tracking throughout pretraining.
 
 #### C. Role of Cayley Geometry and ALU-GLU
-- **Cayley Rotations**: While having modest effect in isolation against standard Softmax, Cayley geometric rotations achieve the single best hybrid score of the entire study in **`H12` (`hybrid_cayley_swiglu_asinh_alg_ce`)** at **`2.8746 NLL`** (PPL **17.72**), edging RoPE.
-- **ALU-GLU**: Functions as a stable, non-saturating algebraic FFN that harmonizes with Asinh attention and Alg-CE to preserve full gradient variance without numerical saturation.
+- **Cayley Rotations**: While showing modest impact in isolation alongside standard Softmax, Cayley geometric rotations achieve the lowest validation NLL among all 16 evaluated configurations in **`H12` (`hybrid_cayley_swiglu_asinh_alg_ce`)** at **`2.8746 NLL`** (PPL **17.72**).
+- **ALU-GLU**: Operates as a stable, non-saturating algebraic FFN that combines effectively with Asinh attention and Alg-CE to preserve gradient variance without numerical saturation.
 
 ---
 
@@ -89,7 +89,8 @@ Every primitive across the full Algebraic Transformer forward, backward, and opt
 
 ---
 
-### 5. Repository Structure
+### 5. Repository Structure & Main Repository Link
+- For 350M and 1B scaling laws, zero-shot benchmarks, needle recall evaluations, and publication manuscript, see the main repository at [`algebraic-transformer`](https://github.com/tasmaikeni13/algebraic-transformer).
 - `src/algebraic/`: Core algebraic model definitions, primitives, and training loops.
 - `hybrid/`: Complete registry, configs, and metadata for all 14 hybrid presets (`H01`–`H14`).
 - `cubic/`: Standalone pure-ALU Hermite polynomial schedule package and tests.
