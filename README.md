@@ -75,8 +75,8 @@ The 16-model factorial ablation reveals three primary empirical findings:
 ### 4. Mathematical Non-Transcendental Verification
 
 Every primitive across the full Algebraic Transformer forward, backward, and optimization pipeline is computable using strictly addition, subtraction, multiplication, division, and reciprocal square roots (`lax.rsqrt`):
-- **Attention**: $\rho(s/c)^n$ where $\rho(x) = x + \sqrt{1 + x^2} = \exp(\operatorname{asinh} x)$ evaluated via rational algebra.
-- **FFN**: $\operatorname{ALU}(x) = \frac{x}{2}\left(1 + \frac{\beta x}{\sqrt{1 + \beta^2 x^2}}\right)$ matching the hyperbolic tangent $\tanh$ on the Beltrami-Klein disk.
+- **Attention**: $\rho(s/c)^n$ where $\rho(x) = x + \sqrt{1 + x^2} = \exp(\mathrm{asinh}\, x)$ evaluated via rational algebra.
+- **FFN**: $\mathrm{ALU}(x) = \frac{x}{2}\left(1 + \frac{\beta x}{\sqrt{1 + \beta^2 x^2}}\right)$ matching the hyperbolic tangent $\tanh$ on the Beltrami-Klein disk.
 - **Head**: Algebraic gradient of rational likelihood $\rho(z/2)^8$.
 - **Position**: Geometric Cayley transform $R = (I - A)(I + A)^{-1}$ operating rationally on $SO(d)$.
 - **Schedule**: Cubic Hermite smoothstep $S(u) = (1 - u)^2(1 + 2u)$.
